@@ -5,8 +5,6 @@ namespace ReedSolomon // Note: actual namespace depends on the project name.
     {
         static void Main()
         {
-            var test = new RSPolynomial ([7,1,2],3,4);
-            test.Print();
             int [] alfa = [1,2,4,8,16,5,10,20,13,26,17,7,14,28,29,31,27,19,3,6,12,24,21,15,30,25,23,11,22,9,18];
             //Stopwatch sw = new Stopwatch();
             //sw.Start();
@@ -17,7 +15,11 @@ namespace ReedSolomon // Note: actual namespace depends on the project name.
             var InCODED = new RSPolynomial ([1,2,10]);
             var CodedVAL = Coder(InCODED, G_x);
             Console.WriteLine(CodedVAL.ToString());
-            (CodedVAL/G_x).Print();
+            var Decoded = CodedVAL.Division(CodedVAL,G_x);
+            Decoded.Item1.Print();
+            Decoded.Item2.Print();
+            //(CodedVAL/G_x).Print();
+            //(CodedVAL/new RSPolynomial([1,42,21,15,7,4,26,30,1])).Print();
             return;
 
         }
