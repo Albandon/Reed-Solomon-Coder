@@ -2,7 +2,7 @@ namespace ReedSolomon
 {
     public class Polynomial
     {
-        protected List<int> Coeficients = new List<int>();
+        protected List<int> Coeficients = [];
         protected int PolyDegree = 0;
         public Polynomial () {}
         public Polynomial (IEnumerable<int> Coefs) {
@@ -20,14 +20,21 @@ namespace ReedSolomon
             }
             return new Polynomial(Product);
         }
+        public static Polynomial operator /(Polynomial a, Polynomial b){
+            var a_size = a.PolyDegree+1;
+            var b_size = b.PolyDegree+1;
+            int [] Product = new int [a_size+b_size-1];
+            for (var i = 0; i < a_size; i++) {
+
+            }
+            return new Polynomial(Product);
+        }
         public override string ToString()
         {
-            string OUT="";
-            foreach (var item in this.Coeficients)
-            {
-                OUT+=item+" ";
-            }
-            return OUT;
+            return this.Coeficients.Aggregate("", (current, item) => current + item + " ");
+        }
+        public void Print () {
+            Console.WriteLine(ToString()); 
         }
     }
 }
