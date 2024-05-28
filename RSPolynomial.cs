@@ -1,4 +1,4 @@
-using System.Reflection.Metadata;
+
 
 namespace ReedSolomon
 {
@@ -6,84 +6,93 @@ namespace ReedSolomon
     {
         //Lista jest szybsza
         private static readonly List<int> Alfa = [1,2,4,8,16,5,10,20,13,26,17,7,14,28,29,31,27,19,3,6,12,24,21,15,30,25,23,11,22,9,18,0]; //Lista alfa^i wartości, tak i==index
-        public RSPolynomial (IEnumerable<int> Coefs) {      //Dodać wyjątek na konstrukcję z elementem > 31
-            var Cof = Coefs.ToList(); 
-            this.Coeficients = Cof;
-            this.PolyDegree=Cof.Count-1;
+        public RSPolynomial (IEnumerable<int> coefficients) {      //Dodać wyjątek na konstrukcję z elementem > 31
+            var cof = coefficients.ToList(); 
+            this.Coefficients = cof;
+            this.PolyDegree=cof.Count - 1;
         }
-        public RSPolynomial (IEnumerable<int> Coefs,int Pos, int Degree) {
-            int [] Cof = new int [Degree+1];
-            var index = Degree-Pos+1;
+        public RSPolynomial (IEnumerable<int> coefficients,int pos, int degree) {
+            int [] cof = new int [degree + 1];
+            var index = degree - pos + 1;
             var i = 0;
-            while (index < Coefs.Count()+Degree-Pos+1) {
-                Cof[index] = Coefs.ElementAt(i);
-                i++;
+            var coefs = coefficients.ToArray();
+            while (index < coefs.Length + degree-pos + 1 ) {
+                cof[index] = coefs.ElementAt(i);
                 index++;
+                i++;
             }
-            this.Coeficients=Cof.ToList();
-            this.PolyDegree=Degree;
+            this.Coefficients=cof.ToList();
+            this.PolyDegree=degree;
         }
+        public List<int> GetCoefficients => Coefficients;
+        public int GetDegree => PolyDegree;
+        
         public static RSPolynomial operator *(RSPolynomial a, RSPolynomial b) {
-            var a_size = a.PolyDegree+1;
-            int b_size = b.PolyDegree+1;
-            var MaxElement = Alfa.Count;
-            int [] Product = new int [a_size + b_size-1];
-            for (int i = 0; i < a_size; i++) {                                                      //troche funny fucky-wucky, shuffluje potęgi(index) i jej wartości 
-                var aVal = Alfa.IndexOf(a.Coeficients[i]);
-                for (int j=0; j < b_size; j++) {
-                    if (a.Coeficients[i]!=0 && b.Coeficients[j]!=0) {
-                        Product[i+j] ^= Alfa[(aVal+Alfa.IndexOf(b.Coeficients[j]))%(MaxElement-1)];     //Szukam wartości dla alfy po "przemnożeniu", zapętlam potęgę do 30 (31 elementów) i xoruje
+            var aSize = a.PolyDegree+1;
+            int bSize = b.PolyDegree+1;
+            var maxElement = Alfa.Count;
+            int [] product = new int [aSize + bSize-1];
+            for (int i = 0; i < aSize; i++) {                                                      //trochę funny fucky-wucky, shuffleuje potęgi(index) i jej wartości 
+                var aVal = Alfa.IndexOf(a.Coefficients[i]);
+                for (int j=0; j < bSize; j++) {
+                    if (a.Coefficients[i]!=0 && b.Coefficients[j]!=0) {
+                        product[i+j] ^= Alfa[(aVal+Alfa.IndexOf(b.Coefficients[j]))%(maxElement-1)];     //Szukam wartości dla alfy po "przemnożeniu", zapętlam potęgę do 30 (31 elementów) i wykonuję operacje xor
 
                     }
                 }
             }
-            return new RSPolynomial(Product);
+            return new RSPolynomial(product);
         }
         public static RSPolynomial operator ^(RSPolynomial a, RSPolynomial b) {
-            var Temp = a.PolyDegree>b.PolyDegree ? new RSPolynomial (b.Coeficients, b.PolyDegree,a.PolyDegree): b;
-            for (int i = 0; i < a.PolyDegree+1; i++)
+            if (a.PolyDegree > b.PolyDegree)
             {
-                a.Coeficients[i]^=b.Coeficients[i];
+                b = new RSPolynomial(b.Coefficients, b.PolyDegree, a.PolyDegree);
+            }
+            else if (a.PolyDegree < b.PolyDegree)
+            {
+                a = new RSPolynomial(a.Coefficients, a.PolyDegree, a.PolyDegree);
+            }
+            for (int i = 0; i <= a.PolyDegree; i++)
+            {
+                a.Coefficients[i] ^= b.Coefficients[i];
             }
             return a;
         }
-        public (RSPolynomial, RSPolynomial) Division (RSPolynomial a, RSPolynomial b) {
-            var a_size = a.PolyDegree+1;
-            var b_size = b.PolyDegree+1;
-            var MaxElement = Alfa.Count;
-            var Product = new int [a_size-b_size+1];
-            var CurrentA = a;
-            RSPolynomial Remainder = new([]); 
-            for (int i = 0; i < Product.Length; i++)
+        public static (RSPolynomial, RSPolynomial) Division (RSPolynomial a, RSPolynomial b) {
+            var aSize = a.PolyDegree+1;
+            var bSize = b.PolyDegree+1;
+            var maxElement = Alfa.Count;
+            var product = new int [aSize-bSize+1];
+            var currentA = a;
+            RSPolynomial remainder; 
+            for (int i = 0; i < product.Length; i++)
             {
-                var DegreeDiv = Alfa.IndexOf(CurrentA.Coeficients[i])-Alfa.IndexOf(b.Coeficients[0]);
-                var Divisor = Alfa[DegreeDiv%(MaxElement-1)];
-                Product[i] = Divisor;
-                Remainder = b * new RSPolynomial ([Divisor],Product.Length-i,Product.Length-1);     
-                CurrentA ^= Remainder;
+                var degreeDiv = Alfa.IndexOf(currentA.Coefficients[i])-Alfa.IndexOf(b.Coefficients[0]);
+                var divisor = Alfa[degreeDiv%(maxElement-1)];
+                product[i] = divisor;
+                remainder = b * new RSPolynomial ([divisor],product.Length-i,product.Length-1);     
+                currentA ^= remainder;
             }
-            Remainder = CurrentA;
-            var Result = new RSPolynomial (Product);
-            return (Result,Remainder);
+            remainder = currentA;
+            var result = new RSPolynomial (product);
+            return (result,remainder);
         }
         public static RSPolynomial operator /(RSPolynomial a, RSPolynomial b) {
-            var a_size = a.PolyDegree+1;
-            var b_size = b.PolyDegree+1;
-            var MaxElement = Alfa.Count;
-            var Product = new int [a_size-b_size+1];
-            var CurrentA = a;
-            RSPolynomial Remainder = new([]); 
-            for (int i = 0; i < Product.Length; i++)
+            var aSize = a.PolyDegree+1;
+            var bSize = b.PolyDegree+1;
+            var maxElement = Alfa.Count;
+            var productSize = a.Coefficients.Count < b.Coefficients.Count ? bSize - aSize + 1: aSize-bSize + 1;
+            var product = new int [productSize];
+            var currentA = a;
+            for (int i = 0; i < product.Length; i++)
             {
-                var DegreeDiv = Alfa.IndexOf(CurrentA.Coeficients[i])-Alfa.IndexOf(b.Coeficients[0]);
-                var Divisor = Alfa[DegreeDiv%(MaxElement-1)];
-                Product[i] = Divisor;
-                Remainder = b * new RSPolynomial ([Divisor],Product.Length-i,Product.Length-1);     
-                CurrentA ^= Remainder;
+                var degreeDiv = Alfa.IndexOf(currentA.Coefficients[i])-Alfa.IndexOf(b.Coefficients[0]);
+                var divisor = Alfa[degreeDiv%(maxElement-1)];
+                product[i] = divisor;
+                var remainder = b * new RSPolynomial ([divisor],product.Length-i,product.Length-1);     
+                currentA ^= remainder;
             }
-            Remainder = CurrentA;
-            Remainder.Print();
-            return new RSPolynomial(Product);
+            return new RSPolynomial(product);
         }
     }
 }
