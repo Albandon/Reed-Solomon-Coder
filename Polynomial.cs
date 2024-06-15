@@ -22,7 +22,7 @@ namespace ReedSolomon
         }
         public override string ToString()
         {
-            return this.Coefficients.Aggregate("", (current, item) => current + item + " ");
+            return this.Coefficients.Aggregate("", (current, item) => current + $"{item:00}" + " ");
         }
         public void Print () {
             Console.WriteLine(ToString()); 

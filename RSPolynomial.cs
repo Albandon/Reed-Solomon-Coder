@@ -24,6 +24,11 @@ namespace ReedSolomon
             this.Coefficients=cof.ToList();
             this.PolyDegree=degree;
         }
+        public RSPolynomial(RSPolynomial a)
+        {
+            Coefficients = a.Coefficients;
+            PolyDegree = a.PolyDegree;
+        }
         public List<int> GetCoefficients => Coefficients;
         public int GetDegree => PolyDegree;
         
@@ -43,34 +48,39 @@ namespace ReedSolomon
             }
             return new RSPolynomial(product);
         }
-        public static RSPolynomial operator ^(RSPolynomial a, RSPolynomial b) {
+        public static RSPolynomial operator ^(in RSPolynomial a, in RSPolynomial b)
+        {
+            var tempa = a;
+            var tempb = b;
             if (a.PolyDegree > b.PolyDegree)
             {
-                b = new RSPolynomial(b.Coefficients, b.PolyDegree, a.PolyDegree);
+                tempb = new RSPolynomial(b.Coefficients, b.PolyDegree+1, a.PolyDegree);
             }
             else if (a.PolyDegree < b.PolyDegree)
             {
-                a = new RSPolynomial(a.Coefficients, a.PolyDegree, a.PolyDegree);
+                tempa = new RSPolynomial(a.Coefficients, a.PolyDegree+1, a.PolyDegree);
             }
             for (int i = 0; i <= a.PolyDegree; i++)
             {
-                a.Coefficients[i] ^= b.Coefficients[i];
+                tempa.Coefficients[i] ^= tempb.Coefficients[i];
             }
-            return a;
+            return tempa; 
         }
-        public static (RSPolynomial, RSPolynomial) Division (RSPolynomial a, RSPolynomial b) {
+        public static (RSPolynomial result, RSPolynomial remainder) Division (RSPolynomial a, RSPolynomial b) {
             var aSize = a.PolyDegree+1;
             var bSize = b.PolyDegree+1;
             var maxElement = Alfa.Count;
             var product = new int [aSize-bSize+1];
-            var currentA = a;
-            RSPolynomial remainder; 
+            var currentA = new RSPolynomial(a);
+            var currentB = new RSPolynomial(b);
+            RSPolynomial remainder;
             for (int i = 0; i < product.Length; i++)
             {
-                var degreeDiv = Alfa.IndexOf(currentA.Coefficients[i])-Alfa.IndexOf(b.Coefficients[0]);
-                var divisor = Alfa[degreeDiv%(maxElement-1)];
+                var degreeDiv = Alfa.IndexOf(currentA.Coefficients[i])-Alfa.IndexOf(currentB.Coefficients[0]);
+                var index = degreeDiv < 0 ? (degreeDiv%(maxElement-1) + (maxElement-1))%(maxElement-1): degreeDiv%(maxElement-1);
+                var divisor = Alfa[index];
                 product[i] = divisor;
-                remainder = b * new RSPolynomial ([divisor],product.Length-i,product.Length-1);     
+                remainder = currentB * new RSPolynomial ([divisor],product.Length-i,product.Length-1);     
                 currentA ^= remainder;
             }
             remainder = currentA;
@@ -83,16 +93,57 @@ namespace ReedSolomon
             var maxElement = Alfa.Count;
             var productSize = a.Coefficients.Count < b.Coefficients.Count ? bSize - aSize + 1: aSize-bSize + 1;
             var product = new int [productSize];
-            var currentA = a;
+            var currentA = new RSPolynomial(a);
+            var currentB = new RSPolynomial(b);
             for (int i = 0; i < product.Length; i++)
             {
-                var degreeDiv = Alfa.IndexOf(currentA.Coefficients[i])-Alfa.IndexOf(b.Coefficients[0]);
-                var divisor = Alfa[degreeDiv%(maxElement-1)];
+                var aVal = currentA.Coefficients[i];
+                if (aVal == 0)
+                {
+                    product[i] = 0;
+                    currentA ^= new RSPolynomial([0], product.Length-i,product.Length-1);
+                    continue;
+                }
+                var degreeDiv = Alfa.IndexOf(aVal)-Alfa.IndexOf(currentB.Coefficients[0]);
+                var index = degreeDiv < 0 ? (degreeDiv%(maxElement-1) + (maxElement-1))%(maxElement-1): degreeDiv%(maxElement-1);
+                var divisor = Alfa[index];
                 product[i] = divisor;
-                var remainder = b * new RSPolynomial ([divisor],product.Length-i,product.Length-1);     
+                var remainder = currentB * new RSPolynomial ([divisor],product.Length-i,product.Length-1);     
                 currentA ^= remainder;
             }
             return new RSPolynomial(product);
+        }
+
+        public static bool operator ==(RSPolynomial a, RSPolynomial b)
+        {
+            return a.GetDegree == b.GetDegree && a.GetCoefficients.Zip(b.GetCoefficients).All(valueTuple => valueTuple.First == valueTuple.Second);
+        }
+
+        public static bool operator !=(RSPolynomial a, RSPolynomial b)
+        {
+            return !(a == b);
+        }
+        public int Substitute(int alfaVal)
+        {
+            var coefficients = Coefficients;
+            var maxElement = Alfa.Count;
+            int[] product;
+            List<int> coefficientsS = [];
+            for (int i = 0; i < PolyDegree; i++)
+            {
+                coefficientsS.Add(alfaVal);
+            }
+            coefficientsS.Add(0);
+            for (int i = 0; i < coefficients.Count; i++)
+            {
+                if (coefficients[i] == 0) continue;
+                var aVal = Alfa.IndexOf(coefficients[i]);
+                var bVal = Alfa.IndexOf(coefficientsS[i]);
+                
+                coefficients[i] = Alfa[(aVal+bVal*(coefficients.Count-1-i))%(maxElement-1)];
+            }
+            var value = coefficients.Aggregate((x, y) => x ^ y);
+            return value;
         }
     }
 }
