@@ -44,7 +44,7 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
         var b = new RSPolynomial([1]);
         while (iterator < syndromes.Length)
         {
-            Console.WriteLine();
+            // Console.WriteLine();
             iterator++;
             var previousIndex = iterator - 1;
             var d = Discrepancy(iterator, syndromes, lambdaList[previousIndex], l[previousIndex]);
@@ -70,10 +70,10 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
                 b *= X;
             }
             if (lambdaList[iterator].GetDegree > 4) throw new Exception("error not correctable");
-            Console.WriteLine($"lambda{iterator}: \t{lambdaList[iterator]}");
-            Console.WriteLine($"B: \t\t{b}");
-            Console.WriteLine($"Discrepancy: \t{d}");
-            Console.WriteLine($"L{iterator}: \t\t{l[iterator]}");
+            // Console.WriteLine($"lambda{iterator}: \t{lambdaList[iterator]}");
+            // Console.WriteLine($"B: \t\t{b}");
+            // Console.WriteLine($"Discrepancy: \t{d}");
+            // Console.WriteLine($"L{iterator}: \t\t{l[iterator]}");
         }
         return lambdaList.Last();
     }
@@ -109,32 +109,50 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
         var t2 = syndromes.Length;
         Array.Reverse(syndromes);
         var syndromesPoly = new RSPolynomial(syndromes);
-        var omegaMod = syndromesPoly * lambda * X;
+        var omegaMod = syndromesPoly * lambda;
         var omegaModCoefs = omegaMod.GetCoefficients;
-        var omega = new int[t2+1];
+        var omega = new int[t2];
         for (int i = 0; i < omega.Length; i++)
         {
-            omega[i] = omegaModCoefs[i + (omegaModCoefs.Count - t2) -1];
+            omega[i] = omegaModCoefs[i + (omegaModCoefs.Count - t2)];
         }
         var lambdaCoefficients = lambda.GetCoefficients;
         var lambdaDerivative = new int [lambdaCoefficients.Count - 1];
-        for (int i = 1; i < lambdaCoefficients.Count; i++)
+        var power = lambdaCoefficients.Count - 1;
+        for (int i = 0; i < lambdaDerivative.Length; i++)
         {
-            lambdaDerivative[i - 1] = lambdaCoefficients[^(i+1)];
+            if ((power - i) % 2 == 0) continue;
+            lambdaDerivative[i] = lambdaCoefficients[i];
         }
-        Array.Reverse(lambdaDerivative);
+        // for (int i = 0; i < lambdaDerivative.Length; i++)
+        // {
+        //     lambdaDerivative[i] = lambdaCoefficients[i];
+        // }
         var lambdaDerivativePoly = new RSPolynomial(lambdaDerivative);
         var omegaPoly = new RSPolynomial(omega);
-        var maxElement = received.GetDegree + 1;
+        var maxElement = 31;
         var temp = new int[maxElement];
         foreach (var t in errorsPosNeg)
         {
+            // if (Alfa.IndexOf(t) == 0)
+            //     temp[0] = Copy(omegaPoly).Substitute(t) /
+            //               Copy(lambdaDerivativePoly).Substitute(t);
+            // else
+            //     temp[Alfa.IndexOf(t) - 1] = Copy(omegaPoly).Substitute(t) /
+            //                                 Copy(lambdaDerivativePoly).Substitute(t);            
             if (Alfa.IndexOf(t) == 0)
-                temp[0] = Alfa[maxElement - Alfa.IndexOf(t)] * Copy(omegaPoly).Substitute(t) /
-                          Copy(lambdaDerivativePoly).Substitute(t);
-            else 
-                temp[Alfa.IndexOf(t)-1] = Alfa[maxElement-Alfa.IndexOf(t)]*Copy(omegaPoly).Substitute(t) / 
-                                          Copy(lambdaDerivativePoly).Substitute(t);
+                temp[0] = Alfa[((Alfa.IndexOf(Copy(omegaPoly).Substitute(t)) -
+                                 Alfa.IndexOf(Copy(lambdaDerivativePoly).Substitute(t)))%31 + 31)%31];
+            else
+                temp[Alfa.IndexOf(t) - 1] =
+                    Alfa[((Alfa.IndexOf(Copy(omegaPoly).Substitute(t)) -
+                           Alfa.IndexOf(Copy(lambdaDerivativePoly).Substitute(t)))%31 + 31)%31];
+            // if (Alfa.IndexOf(t) == 0)
+            //     temp[0] = Alfa[maxElement - Alfa.IndexOf(t)] * Copy(omegaPoly).Substitute(t) /
+            //               Copy(lambdaDerivativePoly).Substitute(t);
+            // else
+            //     temp[Alfa.IndexOf(t) - 1] = Alfa[maxElement - Alfa.IndexOf(t)] * Copy(omegaPoly).Substitute(t) /
+            //                                 Copy(lambdaDerivativePoly).Substitute(t);
         }
         return new RSPolynomial(temp);
     }

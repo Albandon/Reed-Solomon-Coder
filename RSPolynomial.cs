@@ -66,17 +66,26 @@ namespace ReedSolomon
             }
             return tempa; 
         }
-        public static (RSPolynomial result, RSPolynomial remainder) Division (RSPolynomial a, RSPolynomial b) {
+        public (RSPolynomial result, RSPolynomial remainder) Division (RSPolynomial a, RSPolynomial b)
+        {
+            RSPolynomial remainder;
             var aSize = a.PolyDegree+1;
             var bSize = b.PolyDegree+1;
             var maxElement = Alfa.Count;
-            var product = new int [aSize-bSize+1];
+            var productSize = a.Coefficients.Count < b.Coefficients.Count ? bSize - aSize + 1: aSize-bSize + 1;
+            var product = new int [productSize];
             var currentA = new RSPolynomial(a);
             var currentB = new RSPolynomial(b);
-            RSPolynomial remainder;
             for (int i = 0; i < product.Length; i++)
             {
-                var degreeDiv = Alfa.IndexOf(currentA.Coefficients[i])-Alfa.IndexOf(currentB.Coefficients[0]);
+                var aVal = currentA.Coefficients[i];
+                if (aVal == 0)
+                {
+                    product[i] = 0;
+                    currentA ^= new RSPolynomial([0], product.Length-i,product.Length-1);
+                    continue;
+                }
+                var degreeDiv = Alfa.IndexOf(aVal)-Alfa.IndexOf(currentB.Coefficients[0]);
                 var index = degreeDiv < 0 ? (degreeDiv%(maxElement-1) + (maxElement-1))%(maxElement-1): degreeDiv%(maxElement-1);
                 var divisor = Alfa[index];
                 product[i] = divisor;
@@ -145,5 +154,9 @@ namespace ReedSolomon
             var value = coefficients.Aggregate((x, y) => x ^ y);
             return value;
         }
+        // public override string ToString()
+        // {
+        //     return this.Coefficients.Aggregate("", (current, item) => current + $"{Alfa.IndexOf(item):00}" + " ");
+        // }
     }
 }

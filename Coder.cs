@@ -8,6 +8,7 @@ public class Coder
     private readonly int [] _alfa = [1,2,4,8,16,5,10,20,13,26,17,7,14,28,29,31,27,19,3,6,12,24,21,15,30,25,23,11,22,9,18];
     private IEnumerable<string> _messageInBits;
     private RSPolynomial _gX = new ([1,2]);
+    // private RSPolynomial _gX = new ([1,1]);
     public RSPolynomial MessageCoded;
     
     public RSPolynomial GetGenerator => _gX;
@@ -43,7 +44,8 @@ public class Coder
     }
     private void RSgenpoly (int t) {
         for (var i = 1; i < 2*t; i++) {
-            _gX *= new RSPolynomial ([1,_alfa[i+1]]);
+             _gX *= new RSPolynomial ([1,_alfa[i+1]]);
+            // _gX *= new RSPolynomial ([1,_alfa[i]]);
         }
     }
     private static IEnumerable<string> StringToChunks(string str, int chunkSize) {
