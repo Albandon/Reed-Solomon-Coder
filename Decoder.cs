@@ -19,10 +19,10 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
         var lambda = Berlekamp_Massey(syndromes);
         var errorPositionsNegation = ChienSearch(lambda);
         var errorPoly = Forney(syndromes, Copy(lambda), errorPositionsNegation);
-        Console.WriteLine($"errorPoly: \t\t{errorPoly}");
+        // Console.WriteLine($"errorPoly: \t\t{errorPoly}");
         var correctedMessage = Copy(received) ^ errorPoly;
         _correctedMessage = correctedMessage;
-        Console.WriteLine($"correctedMessage: \t{correctedMessage}");
+        // Console.WriteLine($"correctedMessage: \t{correctedMessage}");
     }
     private int[] GetSyndromes(RSPolynomial messageReceived)
     {
@@ -35,7 +35,10 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
         return syndromes;
     }
 
-    private RSPolynomial Berlekamp_Massey(int[] syndromes)
+    // TO:DO:
+    // optymalizacja -> zamiana tablic na dwie tymczasowe zmienne || zmiana tablic na stos?
+    // funkcja niezmieniona od poprzedniego razu
+    private RSPolynomial Berlekamp_Massey(int[] syndromes) // posiada wyjątki gdy L nie pokrywa się ze stopniem lambdy
     {
         List<int> l = [0];
 
@@ -57,7 +60,7 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
                     l.Add(iterator - l[previousIndex]);
                     b = tempLam / d;
                 }
-                else if (2 * l[previousIndex] > previousIndex)
+                else
                 {
                     l.Add(l[previousIndex]);
                     b *= X;
@@ -69,7 +72,7 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
                 l.Add(l[previousIndex]);
                 b *= X;
             }
-            if (lambdaList[iterator].GetDegree > 4) throw new Exception("error not correctable");
+            // if (lambdaList[iterator].GetDegree > 4) throw new Exception("error not correctable");
             // Console.WriteLine($"lambda{iterator}: \t{lambdaList[iterator]}");
             // Console.WriteLine($"B: \t\t{b}");
             // Console.WriteLine($"Discrepancy: \t{d}");
@@ -80,7 +83,10 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
     static RSPolynomial Discrepancy(in int r, in int[] syndromes, in RSPolynomial lastLambda, in int previousL)
     {
         var sum = new RSPolynomial([0]);
-        for (var i = 1; i <= previousL; i++)
+        var lambdaCoefficients = lastLambda.GetCoefficients;
+        var maxLoop = previousL + 1 > lambdaCoefficients.Count ? lambdaCoefficients.Count : previousL + 1;
+        // if (previousL >= lastLambda.GetCoefficients.Count) return sum;
+        for (var i = 1; i < maxLoop; i++)
         {
             sum ^= new RSPolynomial([syndromes[r - i - 1]]) * new RSPolynomial([lastLambda.GetCoefficients[^(i+1)]]);
         }
@@ -93,10 +99,10 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
         var result = discrepancy * X * b ^ previousLambda;
         return result;
     }
-    private List<int> ChienSearch(RSPolynomial locatorPolynomial)
+    private List<int> ChienSearch(RSPolynomial locatorPolynomial) // zero brane pod uwagę?
     {
         List<int> rootIndexes = [];
-        for (var i = 0; i < 31; i++)
+        for (var i = 0; i < 32; i++)
         {
             var sub = Copy(locatorPolynomial).Substitute(i);
             if (sub == 0)
@@ -104,22 +110,23 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
         }
         return rootIndexes;
     }
-    private RSPolynomial Forney(int[] syndromes, RSPolynomial lambda, List<int> errorsPosNeg)
+    private RSPolynomial Forney(int[] syndromes, RSPolynomial lambda, List<int> errorsPosNeg) // taaa...., działa; przydałby się cleanup
     {
         var t2 = syndromes.Length;
         Array.Reverse(syndromes);
         var syndromesPoly = new RSPolynomial(syndromes);
+        // kreacja syndromu od x^0, nie zwiększamy potęgi sztucznie
         var omegaMod = syndromesPoly * lambda;
         var omegaModCoefs = omegaMod.GetCoefficients;
         var omega = new int[t2];
-        for (int i = 0; i < omega.Length; i++)
+        for (int i = 0; i < omega.Length; i++) // mod x^2t
         {
             omega[i] = omegaModCoefs[i + (omegaModCoefs.Count - t2)];
         }
         var lambdaCoefficients = lambda.GetCoefficients;
         var lambdaDerivative = new int [lambdaCoefficients.Count - 1];
         var power = lambdaCoefficients.Count - 1;
-        for (int i = 0; i < lambdaDerivative.Length; i++)
+        for (int i = 0; i < lambdaDerivative.Length; i++)   // Wzór na pochodną z innych źródeł. Działa sprawniej
         {
             if ((power - i) % 2 == 0) continue;
             lambdaDerivative[i] = lambdaCoefficients[i];
@@ -130,9 +137,9 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
         // }
         var lambdaDerivativePoly = new RSPolynomial(lambdaDerivative);
         var omegaPoly = new RSPolynomial(omega);
-        var maxElement = 31;
+        var maxElement = 31; // Dodanie śledzenia max. elementu dla RS Poly
         var temp = new int[maxElement];
-        foreach (var t in errorsPosNeg)
+        foreach (var t in errorsPosNeg) // generator kreowany od alfy^1 więc X^1-b u nas X^1-1 znika, stąd taka forma
         {
             // if (Alfa.IndexOf(t) == 0)
             //     temp[0] = Copy(omegaPoly).Substitute(t) /
@@ -156,5 +163,5 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
         }
         return new RSPolynomial(temp);
     }
-    private static RSPolynomial Copy(RSPolynomial poly) => new RSPolynomial(poly.GetCoefficients);
+    private static RSPolynomial Copy(RSPolynomial poly) => new RSPolynomial(poly.GetCoefficients); // nienawidzę, serio, ale musiałbym najpierw to naprawić w operatorach, a nie chce mi się
 }
