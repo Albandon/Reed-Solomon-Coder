@@ -141,19 +141,24 @@ public class Decoder (RSPolynomial received, RSPolynomial gX)
         var temp = new int[maxElement];
         foreach (var t in errorsPosNeg) // generator kreowany od alfy^1 więc X^1-b u nas X^1-1 znika, stąd taka forma
         {
+            temp[((Alfa.IndexOf(t) - 1) % 31 + 31)%31] =
+                Alfa[((Alfa.IndexOf(Copy(omegaPoly).Substitute(t)) -
+                       Alfa.IndexOf(Copy(lambdaDerivativePoly).Substitute(t)))%31 + 31)%31];
             // if (Alfa.IndexOf(t) == 0)
             //     temp[0] = Copy(omegaPoly).Substitute(t) /
             //               Copy(lambdaDerivativePoly).Substitute(t);
             // else
             //     temp[Alfa.IndexOf(t) - 1] = Copy(omegaPoly).Substitute(t) /
-            //                                 Copy(lambdaDerivativePoly).Substitute(t);            
-            if (Alfa.IndexOf(t) == 0)
-                temp[0] = Alfa[((Alfa.IndexOf(Copy(omegaPoly).Substitute(t)) -
-                                 Alfa.IndexOf(Copy(lambdaDerivativePoly).Substitute(t)))%31 + 31)%31];
-            else
-                temp[Alfa.IndexOf(t) - 1] =
-                    Alfa[((Alfa.IndexOf(Copy(omegaPoly).Substitute(t)) -
-                           Alfa.IndexOf(Copy(lambdaDerivativePoly).Substitute(t)))%31 + 31)%31];
+            //                                 Copy(lambdaDerivativePoly).Substitute(t); 
+            
+            // if (Alfa.IndexOf(t) == 0)
+            //     temp[0] = Alfa[((Alfa.IndexOf(Copy(omegaPoly).Substitute(t)) -
+            //                      Alfa.IndexOf(Copy(lambdaDerivativePoly).Substitute(t)))%31 + 31)%31];
+            // else
+            //     temp[Alfa.IndexOf(t) - 1] =
+            //         Alfa[((Alfa.IndexOf(Copy(omegaPoly).Substitute(t)) -
+            //                Alfa.IndexOf(Copy(lambdaDerivativePoly).Substitute(t)))%31 + 31)%31];
+            
             // if (Alfa.IndexOf(t) == 0)
             //     temp[0] = Alfa[maxElement - Alfa.IndexOf(t)] * Copy(omegaPoly).Substitute(t) /
             //               Copy(lambdaDerivativePoly).Substitute(t);
