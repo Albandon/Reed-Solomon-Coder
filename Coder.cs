@@ -4,9 +4,9 @@ namespace ReedSolomon;
 
 public class Coder
 {
-    public string _message;
+    public string? _message;
     private readonly int [] _alfa = [1,2,4,8,16,5,10,20,13,26,17,7,14,28,29,31,27,19,3,6,12,24,21,15,30,25,23,11,22,9,18];
-    private IEnumerable<string> _messageInBits;
+    private IEnumerable<string>? _messageInBits;
     private RSPolynomial _gX = new ([1,2]);
     // private RSPolynomial _gX = new ([1,1]);
     public RSPolynomial MessageCoded;
@@ -19,9 +19,9 @@ public class Coder
         _message = message;
         Console.WriteLine($"Message: {_message}");
         var bytes = Encoding.ASCII.GetBytes(message);
-        var asciiString = bytes.Aggregate("", (current, value) => current + $"{value,5:b5}");
-        Console.WriteLine($"Message in bits:\t {asciiString}");
-        _messageInBits = StringToChunks(asciiString, 5);
+        var byteString = bytes.Aggregate("", (current, x) => current + $"{x:b8}");
+        Console.WriteLine($"Message in bits:\t {byteString}");
+        _messageInBits = StringToChunks(byteString, 5);
         MessageCoded = BitsToPoly(_messageInBits) * _gX;
     }
 
@@ -33,6 +33,12 @@ public class Coder
         _messageInBits = StringToChunks(_message, 5);
         Console.WriteLine($"Message in bits:\t {_message}");
         MessageCoded = BitsToPoly(_messageInBits) * _gX;
+    }
+
+    public Coder(IEnumerable<int> poly)
+    {
+        RSgenpoly(4);
+        MessageCoded = new RSPolynomial(poly) * _gX;
     }
 
     protected Coder(){}

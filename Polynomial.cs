@@ -22,14 +22,24 @@ namespace ReedSolomon
         }
         public override string ToString()
         {
-            return this.Coefficients.Aggregate("", (current, item) => current + $"{item:00}" + " ");
+            return this.Coefficients.Aggregate("", (current, item) => current + $"{item:b5}" + " ");
         }
         public void Print () {
             Console.WriteLine(ToString()); 
         }
 
         public string PolyToBits() { //konwersja wartości w wielomianie na bity
-            return Coefficients.Aggregate("", (current, value) => current + $"{value,5:b5}");
+            var str = "";
+            var i = 0;
+            foreach (var x in Coefficients)
+            {
+                if (i == Coefficients.Count - 1) return str += $"{x:b}";
+                
+                str += $"{x:b5}";
+                i++;
+            }
+            return str;
+            // return Coefficients.Aggregate("", (current, value) => current + $"{value,5:b5}");
         }
         private static IEnumerable<string> StringToChunks(string str, int chunkSize) {  //funkcja dzieląca na segmenty po 5 znaków (w naszym przypadku po 5 bitów)
             for (int i = 0; i < str.Length; i+=chunkSize)
